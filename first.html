@@ -1,45 +1,156 @@
 <html>
-    <head></head>
+    <head>
+        <style>
+            body {
+                background-color: #120612;
+                padding: 0px;
+                margin: 0px;
+                overflow: hidden;
+            }
+            canvas {
+                image-rendering: optimizeSpeed;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: -o-crisp-edges;
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: pixelated;
+                image-rendering: optimize-contrast;
+                -ms-interpolation-mode: nearest-neighbor;
+                transform-origin: 0 0;
+                transform: scale(2); 
+
+                background-color: white;
+            }
+        </style>
+    </head>
     <body>
-        <canvas id=canvweweras width=400 height=200></canvas>
+        <canvas id=canvweweras width="320px" height="240px"></canvas>
         <script>
         var the_canvas = document.getElementById("canvweweras");
         var ctx = the_canvas.getContext("2d");
 
+        var width = the_canvas.clientWidth;
+        var height = the_canvas.clientHeight;
+
+        var foodMax = 40;
+        var cells = [];
+
+        var colors = [
+            "rgb(255,69,69)",
+            "rgb(255,159,159)",
+            "rgb(255,214,214)",
+            "rgb(50,215,215)",
+            "rgb(100,210,210)",
+            "rgb(10,132,132)",
+            "rgb(94,92,92)",
+            "rgb(191,90,90)",
+            "rgb(255,55,55)",
+        ];
+
+        for(i=0;i<foodMax;i++)
+        cells.push(makeCell(
+            // makeCell
+            // type, x, y, radius, color, name
+            'food',
+            Math.floor(Math.random() * width),
+            Math.floor(Math.random() * height),
+            3,
+            colors[Math.floor(Math.random() * (colors.length-1 + 1) + 0)],
+            null,
+        ));
+
+        cells.push(makeCell(
+            // makeCell
+            // type, x, y, radius, color, name
+            'cell',
+            Math.floor(Math.random() * width),
+            Math.floor(Math.random() * height),
+            40,
+            colors[Math.floor(Math.random() * (colors.length-1 + 1) + 0)],
+            'cv',
+        ));
+
+        cells.push(makeCell(
+            // makeCell
+            // type, x, y, radius, color, name
+            'virus',
+            Math.floor(Math.random() * width),
+            Math.floor(Math.random() * height),
+            20,
+            "green",
+            null,
+        ));
+
+        function makeCell(type, x, y, radius, color, name) {
+            return {
+                x: x,
+                y: y,
+                radius: radius,
+                name: name,
+                color: color,
+                type: type,
+            }
+        }
         function update() {
-        var i;
-        var t = Date.now();
-        var slide = Math.sin(t/10000)*100;
-        var radius = Math.abs(Math.sin(t/1000)*50) + 40;
-        var x = slide + 200;
-        var y = 100;
-        ctx.fillStyle = "rgba(255,255,255,0.2)";
-        ctx.fillRect(0, 0, 400, 400);				// erase the canvas
-        
-        // lets draw the circle
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = "#9C59D1";
-        ctx.lineWidth = radius / 5;
-        ctx.stroke();
-        ctx.fillStyle = "#FFF430";
-        ctx.fill();
-        
-        // text,   x position < >, y position.
-        var text = "Ry";
-        ctx.font = radius * 1.25 +  "px Arial";			  // set font size and style
-        var width = ctx.measureText(text).width;
-        
-        ctx.fillStyle = "white";
-        ctx.fillText(text,    x - width/2,   y + radius/3);  // draw some text using FILL
-        
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = radius / 60;
-        ctx.strokeText(text,  x - width/2,   y + radius/3); // draw some text using STROKE
+
+            ctx.clearRect(0, 0, width, height);
+ 
+            drawCells();
 
         }
 
-        window.setInterval(update, 8);
+        function drawFood() {
+            food.forEach((f) => {
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = f.color;
+                ctx.fill();
+            })
+        }
+        function drawCells() {
+            cells.forEach((c) => {
+            // lets draw the circle
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = c.color;
+                ctx.lineWidth = c.radius / 10;
+                if(c.type === "virus")
+                    ctx.setLineDash([2,4]);
+                else
+                    ctx.setLineDash([])
+                ctx.closePath();
+                ctx.stroke();
+                ctx.closePath();
+
+                // if this is food, let's make it a solid colour.
+                if(c.type === "virus")
+                    ctx.globalAlpha = 0.4;
+                
+                if(c.type !== "cell") {
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, c.radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = c.color;
+                    ctx.fill();
+                    ctx.closePath();
+                }
+                ctx.globalAlpha = 1.0;
+
+                if(c.type === "cell") {
+                    var text = c.name;
+                    ctx.font = c.radius * 1.25 +  "px Arial";
+                    var width = ctx.measureText(text).width;
+                    
+                    ctx.fillStyle = "white";
+                    ctx.fillText(text,    c.x - width/2,   c.y + c.radius/3);
+                    
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = c.radius / 60;
+                    ctx.strokeText(text,  c.x - width/2,   c.y + c.radius/3);
+                }
+            });
+        }
+        
+        window.setInterval(update, 60);
+
         </script>
     </body>
 </html>
