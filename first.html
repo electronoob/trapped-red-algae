@@ -1,0 +1,45 @@
+<html>
+    <head></head>
+    <body>
+        <canvas id=canvweweras width=400 height=200></canvas>
+        <script>
+        var the_canvas = document.getElementById("canvweweras");
+        var ctx = the_canvas.getContext("2d");
+
+        function update() {
+        var i;
+        var t = Date.now();
+        var slide = Math.sin(t/10000)*100;
+        var radius = Math.abs(Math.sin(t/1000)*50) + 40;
+        var x = slide + 200;
+        var y = 100;
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.fillRect(0, 0, 400, 400);				// erase the canvas
+        
+        // lets draw the circle
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#9C59D1";
+        ctx.lineWidth = radius / 5;
+        ctx.stroke();
+        ctx.fillStyle = "#FFF430";
+        ctx.fill();
+        
+        // text,   x position < >, y position.
+        var text = "Ry";
+        ctx.font = radius * 1.25 +  "px Arial";			  // set font size and style
+        var width = ctx.measureText(text).width;
+        
+        ctx.fillStyle = "white";
+        ctx.fillText(text,    x - width/2,   y + radius/3);  // draw some text using FILL
+        
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = radius / 60;
+        ctx.strokeText(text,  x - width/2,   y + radius/3); // draw some text using STROKE
+
+        }
+
+        window.setInterval(update, 8);
+        </script>
+    </body>
+</html>
