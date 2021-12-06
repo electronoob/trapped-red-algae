@@ -30,11 +30,12 @@
             the_canvas.style.width = "100%";
             the_canvas.style.width = "100%";
 
-            var foodMax = 100;
-            var foodMass = 2;
-            var playerStartMass = 10;
+            var foodMax = 10;
+            var foodMass = 4;
+            var playerStartMass = 15;
+            var playerStartID = -1;
             var virusStartMass = 20;
-            var cellNameTextMultiplier = 1.25;
+            var cellNameTextMultiplier = 1;
             var cells = [];
 
             var playerNames = "abstract bio biography curriculum digest epitome history life précis recapitulation resume review rundown résumé story sum summary summation summing-up synopsis vita vitae work".split(" ");
@@ -56,38 +57,41 @@
             for(i=0;i<foodMax;i++)
             cells.push(makeCell(
                 // makeCell
-                // type, x, y, radius, color, name
+                // type, x, y, radius, color, name, id
                 'food',
                 Math.abs(gri(foodMass, width  - foodMass)),
                 Math.abs(gri(foodMass, height - foodMass)),
                 foodMass,
                 colors[gri(0,colors.length-1)],
                 null,
+                null
             ));
 
             cells.push(makeCell(
                 // makeCell
-                // type, x, y, radius, color, name
+                // type, x, y, radius, color, name, id
                 'cell',
                 gri(playerStartMass, width  - playerStartMass),
                 gri(playerStartMass, height - playerStartMass),
                 playerStartMass,
                 colors[gri(0,colors.length-1)],
                 playerNames[gri(0, playerNames.length -1)],
+                playerStartID
             ));
 
             cells.push(makeCell(
                 // makeCell
-                // type, x, y, radius, color, name
+                // type, x, y, radius, color, name, id
                 'virus',
                 gri(virusStartMass, width  - virusStartMass),
                 gri(virusStartMass, height - virusStartMass),
                 virusStartMass,
                 "green",
                 null,
+                null
             ));
-            
-            function makeCell(type, x, y, radius, color, name) {
+
+            function makeCell(type, x, y, radius, color, name, id) {
                 return {
                     x: x,
                     y: y,
@@ -95,11 +99,14 @@
                     name: name,
                     color: color,
                     type: type,
+                    id: id,
                 }
             }
             function render() {
                 ctx.clearRect(0, 0, width, height);
                 drawCells();
+                doSomeBotStuff();
+                //window.requestAnimationFrame(render);
             }
             function drawFood() {
                 food.forEach((f) => {
@@ -154,7 +161,61 @@
             function gri(min, max) {
                 return Math.floor(Math.random() * (max - min + 1)) + min
             }
+
             window.requestAnimationFrame(render);
+
+
+function doSomeBotStuff() {
+    // let's locate nearest food.
+    var localPlayerCells = getPlayerCellsByID(playerStartID);
+    
+    var i;
+    var nearest = null;
+    for(i=0;i<cells.length;i++) {
+        var cell = cells[i];
+        if( cell.type === "food" ) {
+            if(nearest === null) {
+                nearest = i;
+            } else {
+                var current = getDistance(localPlayerCells[0], cell);
+                var old     = getDistance(localPlayerCells[0], cells[nearest]);
+                if(current < old) { 
+                    nearest = i;
+                }
+            }
+        }
+    }
+
+    var a = localPlayerCells[0];
+    var b = cells[nearest];
+
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "white";
+    ctx.setLineDash([3,5]);
+    ctx.stroke();
+    ctx.setLineDash([])
+
+}
+function getPlayerCellsByID(id) {
+    var playerCells = [];
+    var i;
+    for(i=0;i<cells.length;i++) {
+        var cell = cells[i];
+        if(cell.id === id)
+            playerCells.push(cell);
+    }
+    return playerCells;
+}
+function getDistance(a, b){
+    var x = b.x - a.x;
+    var y = b.y - a.y;
+    return Math.sqrt( (x*x) + (y*y) )
+}
+
+
         </script>
     </body>
 </html>
