@@ -222,58 +222,56 @@
                 }
             }, 1)
 
-function doSomeBotStuff() {
-    // let's locate nearest food.
-    var a = localPlayerCells[0];
-    var b = getCellNearTo(a);
-    var z = cells[b];
+            function doSomeBotStuff() {
+                // let's locate nearest food.
+                var a = localPlayerCells[0];
+                var b = getCellNearTo(a);
+                var z = cells[b];
 
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(z.x, z.y);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "white";
-    ctx.setLineDash([3,5]);
-    ctx.stroke();
-    ctx.setLineDash([])
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(z.x, z.y);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "white";
+                ctx.setLineDash([3,5]);
+                ctx.stroke();
+                ctx.setLineDash([])
 
-}
-function getCellNearTo(location) {
-    var i;
-    var nearest = null;
-    for(i=0;i<cells.length;i++) {
-        var cell = cells[i];
-        if( cell.id !== playerStartID ) {
-            if(nearest === null) {
-                nearest = i;
-            } else {
-                var current = getDistance(location, cell);
-                var old     = getDistance(location, cells[nearest]);
-                if(current < old) { 
-                    nearest = i;
-                }
             }
-        }
-    }
-    return nearest;
-}
-function getPlayerCellsByID(id) {
-    var playerCells = [];
-    var i;
-    for(i=0;i<cells.length;i++) {
-        var cell = cells[i];
-        if(cell.id === id)
-            playerCells.push(cell);
-    }
-    return playerCells;
-}
-function getDistance(a, b){
-    var x = b.x - a.x;
-    var y = b.y - a.y;
-    return Math.sqrt( (x*x) + (y*y) )
-}
-
-
+            function getCellNearTo(location) {
+                var i;
+                var nearest = null;
+                for(i=0;i<cells.length;i++) {
+                    var cell = cells[i];
+                    if( cell.id !== playerStartID ) {
+                        if(nearest === null) {
+                            nearest = i;
+                        } else {
+                            var current = getDistance(location, cell);
+                            var old     = getDistance(location, cells[nearest]);
+                            if(current < old) { 
+                                nearest = i;
+                            }
+                        }
+                    }
+                }
+                return nearest;
+            }
+            function getPlayerCellsByID(id) {
+                var playerCells = [];
+                var i;
+                for(i=0;i<cells.length;i++) {
+                    var cell = cells[i];
+                    if(cell.id === id)
+                        playerCells.push(cell);
+                }
+                return playerCells;
+            }
+            function getDistance(a, b){
+                var x = b.x - a.x;
+                var y = b.y - a.y;
+                return Math.sqrt( (x*x) + (y*y) )
+            }
         </script>
     </body>
 </html>
