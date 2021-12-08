@@ -30,14 +30,17 @@
             the_canvas.style.width = "100%";
             the_canvas.style.width = "100%";
 
-            var foodMax = 50;
+            var foodMax = 500;
             var foodMass = 2;
             var playerStartMass = 15;
             var playerStartID = -1;
             var virusStartMass = 20;
             var cellNameTextMultiplier = 1;
             var cells = [];
-
+            var cellsIndex = 0;
+            var cellDecay = 0.9999;
+            var cellEatRatio = 0.85;
+            var cellEatMassRatio = 0.2;
             var playerNames = "abstract bio biography curriculum digest epitome history life précis recapitulation resume review rundown résumé story sum summary summation summing-up synopsis vita vitae work".split(" ");
 
             var colors = [
@@ -57,28 +60,32 @@
             for(i=0;i<foodMax;i++)
             cells.push(makeCell(
                 // makeCell
-                // type, x, y, radius, color, name, id
+                // type, x, y, radius, color, name
                 'food',
                 Math.abs(gri(foodMass, width  - foodMass)),
                 Math.abs(gri(foodMass, height - foodMass)),
                 foodMass,
                 colors[gri(0,colors.length-1)],
                 null,
-                null
+                null,
             ));
 
             cells.push(makeCell(
                 // makeCell
                 // type, x, y, radius, color, name, id
                 'cell',
+                /*
                 gri(playerStartMass, width  - playerStartMass),
                 gri(playerStartMass, height - playerStartMass),
+                */
+                width/2,
+                height/2,
                 playerStartMass,
                 colors[gri(0,colors.length-1)],
                 playerNames[gri(0, playerNames.length -1)],
-                playerStartID
+                playerStartID,
             ));
-
+            for(i=0;i<20;i++)
             cells.push(makeCell(
                 // makeCell
                 // type, x, y, radius, color, name, id
@@ -88,8 +95,10 @@
                 virusStartMass,
                 "green",
                 null,
-                null
+                null,
             ));
+            
+            var localPlayerCells = getPlayerCellsByID(playerStartID);
 
             function makeCell(type, x, y, radius, color, name, id) {
                 return {
@@ -162,46 +171,91 @@
                 return Math.floor(Math.random() * (max - min + 1)) + min
             }
 
-            window.requestAnimationFrame(render);
+            render();
+
             setInterval(()=>{
-                var localPlayerCells = getPlayerCellsByID(playerStartID);
                 localPlayerCells[0].x += Math.sin(Date.now() / 10000) /2 ;
                 localPlayerCells[0].y += Math.sin(Date.now() / 1000)  /2;
+                var a = localPlayerCells[0];
+                var b = getCellNearTo(a);
+                var z = cells[b];
+                //localPlayerCells[0].radius = cellDecay * localPlayerCells[0].radius;
+                if(a.radius * cellEatRatio > z.radius) {
+                    if(getDistance(a, z) < a.radius)
+                    {
+                        if(z.type === "food")
+                        {
+                            localPlayerCells[0].radius += z.radius * cellEatMassRatio;
+                            cells.splice(b, 1);
+                            // make a new replacement foodie
+                            cells.push(makeCell(
+                                // makeCell
+                                // type, x, y, radius, color, name
+                                'food',
+                                Math.abs(gri(foodMass, width  - foodMass)),
+                                Math.abs(gri(foodMass, height - foodMass)),
+                                foodMass,
+                                colors[gri(0,colors.length-1)],
+                                null,
+                                null,
+                            ));
+                        }
+                        if(z.type === "virus")
+                        {
+                            localPlayerCells[0].radius += z.radius * cellEatMassRatio;
+                            cells.splice(b, 1);
+                            // make a new replacement virus
+                            cells.push(makeCell(
+                                // makeCell
+                                // type, x, y, radius, color, name, id
+                                'virus',
+                                gri(virusStartMass, width  - virusStartMass),
+                                gri(virusStartMass, height - virusStartMass),
+                                virusStartMass,
+                                "green",
+                                null,
+                                null,
+                            ));
+                        }
+                        return;
+                    }
+                }
             }, 1)
 
 function doSomeBotStuff() {
     // let's locate nearest food.
-    var localPlayerCells = getPlayerCellsByID(playerStartID);
-    
-    var i;
-    var nearest = null;
-    for(i=0;i<cells.length;i++) {
-        var cell = cells[i];
-        if( cell.type === "food" ) {
-            if(nearest === null) {
-                nearest = i;
-            } else {
-                var current = getDistance(localPlayerCells[0], cell);
-                var old     = getDistance(localPlayerCells[0], cells[nearest]);
-                if(current < old) { 
-                    nearest = i;
-                }
-            }
-        }
-    }
-
     var a = localPlayerCells[0];
-    var b = cells[nearest];
+    var b = getCellNearTo(a);
+    var z = cells[b];
 
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(z.x, z.y);
     ctx.lineWidth = 3;
     ctx.strokeStyle = "white";
     ctx.setLineDash([3,5]);
     ctx.stroke();
     ctx.setLineDash([])
 
+}
+function getCellNearTo(location) {
+    var i;
+    var nearest = null;
+    for(i=0;i<cells.length;i++) {
+        var cell = cells[i];
+        if( cell.id !== playerStartID ) {
+            if(nearest === null) {
+                nearest = i;
+            } else {
+                var current = getDistance(location, cell);
+                var old     = getDistance(location, cells[nearest]);
+                if(current < old) { 
+                    nearest = i;
+                }
+            }
+        }
+    }
+    return nearest;
 }
 function getPlayerCellsByID(id) {
     var playerCells = [];
