@@ -150,7 +150,7 @@
                 }
             }
 
-            var foodMax = 200;
+            var foodMax = 300;
             var foodMass = 2;
             var playerStartMass = 15;
             var playerStartID = -1;
@@ -240,15 +240,16 @@
 
                 var a = localPlayerCells[0];
 
-                ctx.beginPath();
-                ctx.moveTo(a.pos.x, a.pos.y);
-                ctx.lineTo(a.target.pos.x, a.target.pos.y);
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = "white";
-                ctx.setLineDash([3,5]);
-                ctx.stroke();
-                ctx.setLineDash([])
-
+                if ( a.target.pos.x !== 0 && a.target.pos.y !==0) {
+                    ctx.beginPath();
+                    ctx.moveTo(a.pos.x, a.pos.y);
+                    ctx.lineTo(a.target.pos.x, a.target.pos.y);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = "white";
+                    ctx.setLineDash([3,5]);
+                    ctx.stroke();
+                    ctx.setLineDash([])
+                }
                 
                 cells.forEach((c) => {
                     ctx.beginPath();
@@ -296,18 +297,22 @@
 
             render();
 
-            setInterval(()=> {
-                var localPlayerCells = getPlayerCellsByID(playerStartID);
+            setTimeout(()=>{
+                // wanted a pause to record gif
+                setInterval(()=> {
+                    var localPlayerCells = getPlayerCellsByID(playerStartID);
 
-                var a = localPlayerCells[0].pos;
+                    var a = localPlayerCells[0].pos;
 
-                var b = getCellNearTo(a, localPlayerCells[0].radius * cellEatRatio);
-                var z = cells[b].pos;
+                    var b = getCellNearTo(a, localPlayerCells[0].radius * cellEatRatio);
+                    var z = cells[b].pos;
 
-                localPlayerCells[0].attack(z);
-                localPlayerCells[0].update();
-                localPlayerCells[0].attract();
-            }, 8);
+                    localPlayerCells[0].attack(z);
+                    localPlayerCells[0].update();
+                    localPlayerCells[0].attract();
+                }, 4);
+
+            }, 10000)
 
             setInterval(()=>{
                 /*
