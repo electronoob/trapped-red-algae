@@ -30,7 +30,127 @@
             the_canvas.style.width = "100%";
             the_canvas.style.width = "100%";
 
-            var foodMax = 500;
+            function constrain (value, min,max) {
+                return Math.min(Math.max(value, min), max)
+            }
+            function getRandomIntInclusive(min, max) {
+                //taken from mdn
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+            class Cell {
+                radius;
+                name;
+                color;
+                type;
+                id;
+                pos;
+                lpos;
+                target;
+                velocity;
+                acceleration;
+
+                constructor (cell) {
+                    this.radius = cell.radius;
+                    this.name = cell.name;
+                    this.color = cell.color;
+                    this.type = cell.type;
+                    this.id = cell.id;
+
+                    this.pos = new Vector(cell.x, cell.y);
+                    this.lpos = new Vector();
+                    this.target = {}
+                    this.target.pos = new Vector();
+                    this.velocity = new Vector();
+                    this.acceleration = new Vector();
+                }
+                update () {
+                    this.lpos.x = this.pos.x;
+                    this.lpos.y = this.pos.y;
+                    this.pos.add(this.velocity);
+                    this.pos.add(this.velocity);
+                    this.pos.add(this.velocity);
+
+                    this.velocity.mul(0);
+                    this.velocity.add(this.acceleration);
+                    this.acceleration.mul(0);
+                }
+                attract () {
+                    var force = new Vector(this.target.pos.x, this.target.pos.y);
+                    force.sub(this.pos);
+                    force.setMag(10/this.radius);
+                    this.acceleration.add(force);
+                    //this.acceleration.mul(10);
+                }
+                attack (pos) {
+                    this.target.pos = pos;
+                }
+            }
+            class Vector {
+                x;
+                y;
+                constructor(x = 0, y = 0) {
+                    this.x = x;
+                    this.y = y;
+                }
+                sub (b) {
+                    this.x -= b.x;
+                    this.y -= b.y;
+                }
+                add (b) {
+                    this.x += b.x;
+                    this.y += b.y;
+                }
+                heading () {
+                    return Math.atan2(this.y, this.x);
+                }
+                mag () {
+                    return Math.sqrt(Math.pow(Math.abs(this.x), 2) + Math.pow(Math.abs(this.y), 2));
+                }
+                magsq () {
+                    return Math.pow(Math.abs(this.x), 2) + Math.pow(Math.abs(this.y), 2);
+                }
+                div (value) {
+                    this.x /= value;
+                    this.y /= value;
+                }
+                mul (value) {
+                    this.x *= value;
+                    this.y *= value;
+                }
+                setMag (value) {
+                    var m = this.mag();
+                    if (m !== 0 && m != 1) {
+                        this.div(m);
+                    }
+                    this.mul(value);
+                }
+                hypot (b) {
+                    return Math.hypot(this.x - b.x, this.y - b.y);
+                }
+                lerp (b, step) {
+                    var a = new Vector(this.x, this.y);
+                    b.sub(a);
+                    b.mul(step);
+                    b.add(a);
+                    return b;
+                }
+                toDegrees (o) {
+                    return o * 180 / Math.PI;
+                }
+                toRadians (o) {
+                    return (Math.PI / 180) * o;
+                }
+                rotate (o) {
+                    var tmp_heading = this.heading() + o;
+                    var tmp_mag = this.mag();
+                    this.x = Math.cos(tmp_heading) * tmp_mag;
+                    this.y = Math.sin(tmp_heading) * tmp_mag;
+                }
+            }
+
+            var foodMax = 200;
             var foodMass = 2;
             var playerStartMass = 15;
             var playerStartID = -1;
@@ -38,7 +158,7 @@
             var cellNameTextMultiplier = 1;
             var cells = [];
             var cellsIndex = 0;
-            var cellDecay = 0.9999;
+            var cellDecay = 0.999;
             var cellEatRatio = 0.85;
             var cellEatMassRatio = 0.2;
             var playerNames = "abstract bio biography curriculum digest epitome history life précis recapitulation resume review rundown résumé story sum summary summation summing-up synopsis vita vitae work".split(" ");
@@ -85,7 +205,7 @@
                 playerNames[gri(0, playerNames.length -1)],
                 playerStartID,
             ));
-            for(i=0;i<20;i++)
+            for(i=0;i<2;i++)
             cells.push(makeCell(
                 // makeCell
                 // type, x, y, radius, color, name, id
@@ -101,7 +221,7 @@
             var localPlayerCells = getPlayerCellsByID(playerStartID);
 
             function makeCell(type, x, y, radius, color, name, id) {
-                return {
+                return new Cell ({
                     x: x,
                     y: y,
                     radius: radius,
@@ -109,26 +229,30 @@
                     color: color,
                     type: type,
                     id: id,
-                }
+                })
             }
             function render() {
                 ctx.clearRect(0, 0, width, height);
                 drawCells();
-                doSomeBotStuff();
                 window.requestAnimationFrame(render);
             }
-            function drawFood() {
-                food.forEach((f) => {
-                    ctx.beginPath();
-                    ctx.arc(f.x, f.y, f.radius, 0, 2 * Math.PI);
-                    ctx.fillStyle = f.color;
-                    ctx.fill();
-                })
-            }
             function drawCells() {
+
+                var a = localPlayerCells[0];
+
+                ctx.beginPath();
+                ctx.moveTo(a.pos.x, a.pos.y);
+                ctx.lineTo(a.target.pos.x, a.target.pos.y);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "white";
+                ctx.setLineDash([3,5]);
+                ctx.stroke();
+                ctx.setLineDash([])
+
+                
                 cells.forEach((c) => {
                     ctx.beginPath();
-                    ctx.arc(c.x, c.y, c.radius, 0, 2 * Math.PI);
+                    ctx.arc(c.pos.x, c.pos.y, c.radius, 0, 2 * Math.PI);
                     ctx.strokeStyle = c.color;
                     ctx.lineWidth = c.radius / 10;
                     if(c.type === "virus")
@@ -139,13 +263,12 @@
                     ctx.stroke();
                     ctx.closePath();
 
-                    
                     if(c.type === "virus")
                         ctx.globalAlpha = 0.4;
                     
                     if(c.type !== "cell") {
                         ctx.beginPath();
-                        ctx.arc(c.x, c.y, c.radius, 0, 2 * Math.PI);
+                        ctx.arc(c.pos.x, c.pos.y, c.radius, 0, 2 * Math.PI);
                         ctx.fillStyle = c.color;
                         ctx.fill();
                         ctx.closePath();
@@ -158,11 +281,11 @@
                         var width = ctx.measureText(text).width;
                         
                         ctx.fillStyle = "white";
-                        ctx.fillText(text,    c.x - width/2,   c.y + c.radius/3);
+                        ctx.fillText(text,    c.pos.x - width/2,   c.pos.y + c.radius/3);
                         
                         ctx.strokeStyle = "black";
                         ctx.lineWidth = c.radius / 60;
-                        ctx.strokeText(text,  c.x - width/2,   c.y + c.radius/3);
+                        ctx.strokeText(text,  c.pos.x - width/2,   c.pos.y + c.radius/3);
                     }
                 });
             }
@@ -173,15 +296,32 @@
 
             render();
 
+            setInterval(()=> {
+                var localPlayerCells = getPlayerCellsByID(playerStartID);
+
+                var a = localPlayerCells[0].pos;
+
+                var b = getCellNearTo(a, localPlayerCells[0].radius * cellEatRatio);
+                var z = cells[b].pos;
+
+                localPlayerCells[0].attack(z);
+                localPlayerCells[0].update();
+                localPlayerCells[0].attract();
+            }, 8);
+
             setInterval(()=>{
-                localPlayerCells[0].x += Math.sin(Date.now() / 10000) /2 ;
-                localPlayerCells[0].y += Math.sin(Date.now() / 1000)  /2;
+                /*
+                    localPlayerCells[0].x += Math.sin(Date.now() / 10000) /2 ;
+                    localPlayerCells[0].y += Math.sin(Date.now() / 1000)  /2;
+                */
                 var a = localPlayerCells[0];
-                var b = getCellNearTo(a);
+                var b = getCellNearTo(a.pos);
                 var z = cells[b];
-                //localPlayerCells[0].radius = cellDecay * localPlayerCells[0].radius;
+
+                localPlayerCells[0].radius = cellDecay * localPlayerCells[0].radius;
+
                 if(a.radius * cellEatRatio > z.radius) {
-                    if(getDistance(a, z) < a.radius)
+                    if(getDistance(a.pos, z.pos) < a.radius)
                     {
                         if(z.type === "food")
                         {
@@ -220,25 +360,9 @@
                         return;
                     }
                 }
-            }, 1)
+            }, 8)
 
-            function doSomeBotStuff() {
-                // let's locate nearest food.
-                var a = localPlayerCells[0];
-                var b = getCellNearTo(a);
-                var z = cells[b];
-
-                ctx.beginPath();
-                ctx.moveTo(a.x, a.y);
-                ctx.lineTo(z.x, z.y);
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = "white";
-                ctx.setLineDash([3,5]);
-                ctx.stroke();
-                ctx.setLineDash([])
-
-            }
-            function getCellNearTo(location) {
+            function getCellNearTo(location, minMass = -1) {
                 var i;
                 var nearest = null;
                 for(i=0;i<cells.length;i++) {
@@ -247,10 +371,14 @@
                         if(nearest === null) {
                             nearest = i;
                         } else {
-                            var current = getDistance(location, cell);
-                            var old     = getDistance(location, cells[nearest]);
-                            if(current < old) { 
-                                nearest = i;
+                            var current = getDistance(location, cell.pos);
+                            var old     = getDistance(location, cells[nearest].pos);
+                            if(current < old) {
+                                if( cell.radius <= minMass ) {
+                                    nearest = i;
+                                } else if (minMass === -1) {
+                                    nearest = i;
+                                }
                             }
                         }
                     }
